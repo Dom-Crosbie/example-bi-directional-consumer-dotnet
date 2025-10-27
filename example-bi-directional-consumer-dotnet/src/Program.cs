@@ -9,15 +9,43 @@ namespace Consumer
     {
         static async Task Main(string[] args)
         {
-            var baseUri = "http://localhost:9000/";
+            var baseUri = "http://localhost:9099/";
 
-            Console.WriteLine("Fetching products");
+            Console.WriteLine("Fetching products from: " + baseUri);
             var consumer = new ProductClient();
-            var result = await consumer.GetProducts(baseUri);
-            Console.WriteLine(JsonConvert.SerializeObject(result));
+            
+            try
+            {
+                var result = await consumer.GetProducts(baseUri);
+                Console.WriteLine("✅ All Products:");
+                Console.WriteLine(JsonConvert.SerializeObject(result, Formatting.Indented));
 
-            Product productResult = await consumer.GetProduct(baseUri, 10);
-            Console.WriteLine(JsonConvert.SerializeObject(productResult));
+                if (result.Count > 0)
+                {
+                    var firstProduct = result[0];
+                    Console.WriteLine($"\n✅ Getting product with ID {firstProduct.id}:");
+                    Product productResult = await consumer.GetProduct(baseUri, firstProduct.id);
+                    Console.WriteLine(JsonConvert.SerializeObject(productResult, Formatting.Indented));
+                }
+
+                // Test error case
+                Console.WriteLine("\n🧪 Testing product ID 999 (should fail):");
+                try
+                {
+                    Product errorTest = await consumer.GetProduct(baseUri, 999);
+                    Console.WriteLine("❌ Unexpected success!");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"✅ Expected error: {ex.Message}");
+                }
+                
+                Console.WriteLine("\n🎉 Consumer test completed!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error: {ex.Message}");
+            }
         }
 
         static private void WriteoutArgsUsed(string datetimeArg, string baseUriArg)
